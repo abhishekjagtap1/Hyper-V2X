@@ -29,6 +29,39 @@ import math
 from einops import rearrange
 import math
 
+
+class AttentionPool(nn.Module):
+    def __init__(self, in_channels, latent_dim):
+        super().__init__()
+        self.latent_dim = latent_dim  # store for use in forward
+        self.query = nn.Parameter(torch.randn(1, 1, latent_dim))  # [1,1,D]
+        self.proj = nn.Linear(in_channels, latent_dim)
+
+    def forward(self, feat):
+        """
+        feat: [B, C, H, W]
+        returns: [B, latent_dim]
+        """
+        B, C, H, W = feat.shape
+
+        # Flatten spatial dims: [B, HW, C]
+        x = feat.view(B, C, H * W).transpose(1, 2)
+
+        # Project features to latent space: [B, HW, latent_dim]
+        k = self.proj(x)
+
+        # Expand query for each batch: [B, 1, latent_dim]
+        q = self.query.expand(B, -1, -1)
+
+        # Attention weights: [B, 1, HW]
+        attn = torch.softmax((q @ k.transpose(-2, -1)) / (self.latent_dim ** 0.5), dim=-1)
+
+        # Weighted sum: [B, 1, latent_dim] → [B, latent_dim]
+        pooled = (attn @ k).squeeze(1)
+
+        return pooled
+
+
 class MultiHyperNet(nn.Module):
     """Hypernetwork generating K independent sets of conv params."""
     def __init__(self, cond_dim, output_param_count, K=4, hidden_sizes=(256,256)):
@@ -61,6 +94,7 @@ class HyperSegHead(nn.Module):
         self.num_classes = num_classes
         self.kernel_size = kernel_size
         self.K = K
+        self.attention_pooling = AttentionPool(in_channels=in_channels, latent_dim=64)
 
         # shapes for conv3x3
         self.weight_shape = (num_classes, in_channels, kernel_size, kernel_size)
@@ -69,9 +103,11 @@ class HyperSegHead(nn.Module):
         b_count = int(torch.tensor(self.bias_shape).prod())
         self.total_params = w_count + b_count
 
-        self.hyper = MultiHyperNet(cond_dim=in_channels,
+        self.hyper = MultiHyperNet(cond_dim=64,
                                    output_param_count=self.total_params,
                                    K=K)
+
+        ### hardcoded cond dim for 256 after attention pooling
 
     def _unflatten(self, vec):
         # vec: [B,K,P]
@@ -104,7 +140,12 @@ class HyperSegHead(nn.Module):
         return out
 
     def forward(self, feat):
-        cond = feat.mean(dim=[2,3])  # [B,C]
+        B, C, H, W = feat.shape
+        ##### B = 1, C = 128, H= 32,  W = 32
+        cond = self.attention_pooling(feat)
+        # Cond.shape = [1, 256]
+        #cond_2 = feat.mean(dim=[2, 3])  # [B,C]
+
         vecs = self.hyper(cond)      # [B,K,P]
         params = self._unflatten(vecs)
         out = self.forward_with_params(feat, params)  # [K,B,C,H,W]
@@ -132,7 +173,7 @@ class HyperBevSegHead(nn.Module):
             self.dynamic_head = HyperSegHead(in_channels, num_classes)
             self.static_head = HyperSegHead(in_channels, num_classes)
 
-    def forward(self, x, b, l, K=None):
+    def forward(self, x, b, l):
         out = {}
 
         # Dynamic-only
@@ -297,13 +338,15 @@ class CorpBEVT(nn.Module):
         # fuse all agents together to get a single bev map, b h w c
         x = rearrange(x, 'b l h w c -> b l c h w')
         x = self.fusion_net(x, com_mask)
+        #print(x.shape) # 1. 128. 32, 32
         x = x.unsqueeze(1)
+        #print(x.shape) #1, 1, 128, 32, 32
 
         # dynamic head
         x = self.decoder(x)
         x = rearrange(x, 'b l c h w -> (b l) c h w') # 1, 32, 256, 256
-        b = x.shape[0]
+        batch = x.shape[0]
 
-        output_dict = self.seg_head(x, b, 1) # 1, 1, 2, 256, 256 vanilla head
+        output_dict = self.seg_head(x, batch, 1) # 1, 1, 2, 256, 256 vanilla head
 
         return output_dict

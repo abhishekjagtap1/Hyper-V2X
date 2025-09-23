@@ -4,7 +4,7 @@ validate_dir: '/data/s2/semantic-opv2v/validate'
 
 
 train_params:
-  batch_size: &batch_size 1
+  batch_size: &batch_size 4
   epoches: &epoches 151
   eval_freq: 5
   save_freq: 5
@@ -13,7 +13,7 @@ train_params:
 
 
 fusion:
-  core_method: 'CamIntermediateFusionDataset' # LateFusionDataset, EarlyFusionDataset, IntermediateFusionDataset supported
+  core_method: 'CamLateFusionDataset' # LateFusionDataset, EarlyFusionDataset, IntermediateFusionDataset supported
   args: []
 
 
@@ -44,18 +44,15 @@ postprocess:
   nms_thresh: 0.15
 
 model:
-  core_method: corpbevt
+  core_method: fax_fused_transformer
   args:
-    target: &target  'dynamic' #'dynamic' dynamic, static or both
-    max_cav: *max_cav
+    target: &target 'static' #'dynamic'# dynamic, static or both
     encoder:
       num_layers: 34
       pretrained: true
       image_width: *image_width
       image_height: *image_height
       id_pick: [1, 2, 3]
-
-    compression: 0 # compression rate
 
     decoder:
       input_dim: 128
@@ -94,24 +91,9 @@ model:
         dropout: 0.1
         window_size: 32
 
-    sttf: &sttf
-      resolution: 0.390625 # m/pixel
-      downsample_rate: 8
-      use_roi_mask: true
-
-    fax_fusion:
-      input_dim: 128
-      mlp_dim: 256
-      agent_size: *max_cav
-      window_size: 8
-      dim_head: 32
-      drop_out: 0.1
-      depth: 3
-      mask: true
-
 
     seg_head_dim: 32
-    output_class: 2
+    output_class: 3
 
 loss:
   core_method: vanilla_seg_loss
@@ -119,6 +101,7 @@ loss:
     target: *target
     d_weights: 75.0
     s_weights: 15.0
+    l_weights: 4.0
     d_coe: 2.0
     s_coe: 0.0
 

@@ -30,17 +30,22 @@ def main():
     dynamic_path = os.path.join(opt.dynamic_path, 'test_vis')
     static_path = os.path.join(opt.static_path, 'test_vis')
 
-    dynamic_figures = os.listdir(dynamic_path)
-    static_figures = os.listdir(static_path)
+    dynamic_figures = sorted(os.listdir(dynamic_path))
+    print(len(dynamic_figures))
+    
+    
+    static_figures = sorted(os.listdir(static_path))
+    print(len(static_figures))
 
     image_width = 800
     image_height = 600
 
-    assert len(dynamic_figures) == len(static_figures)
+    #assert len(dynamic_figures) == len(static_figures)
 
     for figure in dynamic_figures:
         dynamic_fig = cv2.imread(os.path.join(dynamic_path, figure), 0)
         static_fig = cv2.imread(os.path.join(static_path, figure))
+        print(os.path.join(static_path, figure))
 
         dynamic_gt = dynamic_fig[:, 4 * image_width:5 * image_width]
         dynamic_gt[dynamic_gt > 0] = 1

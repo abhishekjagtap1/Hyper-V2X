@@ -31,7 +31,7 @@ import math
 
 class MultiHyperNet(nn.Module):
     """Hypernetwork generating K independent sets of conv params."""
-    def __init__(self, cond_dim, output_param_count, K=4, hidden_sizes=(256,256)):
+    def __init__(self, cond_dim, output_param_count, K=8, hidden_sizes=(256,256)):
         super().__init__()
         self.K = K
         layers = []
@@ -55,7 +55,7 @@ class HyperSegHead(nn.Module):
     Hypernetwork-powered segmentation head.
     Deterministically generates K weight sets (no Monte Carlo sampling).
     """
-    def __init__(self, in_channels, num_classes, kernel_size=3, K=4):
+    def __init__(self, in_channels, num_classes, kernel_size=3, K=8):
         super().__init__()
         self.in_channels = in_channels
         self.num_classes = num_classes
@@ -132,7 +132,7 @@ class HyperBevSegHead(nn.Module):
             self.dynamic_head = HyperSegHead(in_channels, num_classes)
             self.static_head = HyperSegHead(in_channels, num_classes)
 
-    def forward(self, x, b, l, K=None):
+    def forward(self, x, b, l):
         out = {}
 
         # Dynamic-only

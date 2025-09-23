@@ -29,6 +29,11 @@ At epoch 0, the validation loss is 5.539064,the dynamic iou is 0.145597, the roa
 
 ## HyperV2x includiong decoder generating weights is fax_2025_09_16_14_59_13
 
+## Hyper_v2X direct with K=8 fax_2025_09_17_17_19_50
+
+## Hyper_v2X direct with attention pooling instead of global average pooling k= 4 fax_2025_09_18_10_21_08
+
+
 
 CoBEVT is the first generic multi-agent multi-camera perception framework that can cooperatively generate BEV
 map predictions. The core component of CoBEVT, named fused axial

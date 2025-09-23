@@ -29,14 +29,14 @@ class FaxFusedTransformer(nn.Module):
 
         self.target = config['target']
         ################### Original Seg Head ##########################################################
-        self.seg_head = BevSegHead(self.target,
-                                   config['seg_head_dim'],
-                                   config['output_class'])
+        #self.seg_head = BevSegHead(self.target,
+         #                          config['seg_head_dim'],
+          #                         config['output_class'])
         ################################################################################################
         ############# Bayesian HyperNetwork Head for Stochaistic BEV segmentation ######################
-        #self.seg_head = HyperBevSegHead(self.target,
-         #                               config['seg_head_dim'],
-          #                              config['output_class'])
+        self.seg_head = HyperBevSegHead(self.target,
+                                        config['seg_head_dim'],
+                                        config['output_class'])
         ################################################################################################
 
     def forward(self, batch_dict):

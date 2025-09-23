@@ -10,7 +10,20 @@ This repository contains the source code and data for our CoBEVT OPV2V track. Th
 
 ```bash
 # Clone repo
-git clone https://github.com/DerrickXuNu/CoBEVT.git
+
+# Single Vehicle Training with stochaisticity via Hypernetwork Experiments starts here
+# Used model is fax_fused_transformer.py
+
+SinBEVT - Single Vehicle training using fax.yaml
+cd /data/s2/abhi_workspace/official_benchmarking_hyper_v2x/fax_2025_09_23_12_30_47
+
+SinBevt - Single Vehicle training for static_map using fax_static.yaml
+cd /data/s2/abhi_workspace/official_benchmarking_hyper_v2x/fax_2025_09_23_13_23_20
+
+# Single Vehicle Training with stochaisticity Experiments End here
+
+# Official pre-training for SinBeVT
+cd /data/s2/abhi_workspace/official_benchmarking_hyper_v2x/fax_2025_09_23_14_22_07
 
 cd CoBEVT/opv2v
 

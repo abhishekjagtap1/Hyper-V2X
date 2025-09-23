@@ -1,6 +1,6 @@
 name: fax # only used for demonstration data api
-root_dir: '/data/opv2v/train'
-validate_dir: '/data/opv2v/validate'
+root_dir: '/data/s2/semantic-opv2v/train'
+validate_dir: '/data/s2/semantic-opv2v/validate'
 
 
 train_params:
@@ -18,7 +18,7 @@ fusion:
 
 
 data_augment: []
-add_data_extension: ['bev_dynamic.png', 'bev_static.png',  'bev_visibility.png', 'bev_visibility_corp.png']
+add_data_extension: ['bev_dynamic.png', 'bev_static.png', 'bev_lane.png', 'bev_visibility.png', 'bev_visibility_corp.png']
 
 # preprocess-related
 preprocess:

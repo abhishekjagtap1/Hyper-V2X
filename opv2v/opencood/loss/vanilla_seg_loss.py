@@ -18,7 +18,8 @@ class VanillaSegLoss(nn.Module):
 
         self.loss_func_static = \
             nn.CrossEntropyLoss(
-                weight=torch.Tensor([1., self.s_weights, self.l_weights]).cuda())
+               weight=torch.Tensor([1., self.s_weights, self.l_weights]).cuda())
+
         self.loss_func_dynamic = \
             nn.CrossEntropyLoss(
                 weight=torch.Tensor([1., self.d_weights]).cuda())
