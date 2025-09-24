@@ -94,7 +94,7 @@ class HyperSegHead(nn.Module):
         self.num_classes = num_classes
         self.kernel_size = kernel_size
         self.K = K
-        self.attention_pooling = AttentionPool(in_channels=in_channels, latent_dim=256)
+        self.attention_pooling = AttentionPool(in_channels=in_channels, latent_dim=in_channels)
 
         # shapes for conv3x3
         self.weight_shape = (num_classes, in_channels, kernel_size, kernel_size)
