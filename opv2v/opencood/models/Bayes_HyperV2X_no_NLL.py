@@ -28,37 +28,6 @@ import torch.nn.functional as F
 from einops import rearrange
 import math
 
-class AttentionPool(nn.Module):
-    def __init__(self, in_channels, latent_dim):
-        super().__init__()
-        self.latent_dim = latent_dim  # store for use in forward
-        self.query = nn.Parameter(torch.randn(1, 1, latent_dim))  # [1,1,D]
-        self.proj = nn.Linear(in_channels, latent_dim)
-
-    def forward(self, feat):
-        """
-        feat: [B, C, H, W]
-        returns: [B, latent_dim]
-        """
-        B, C, H, W = feat.shape
-
-        # Flatten spatial dims: [B, HW, C]
-        x = feat.view(B, C, H * W).transpose(1, 2)
-
-        # Project features to latent space: [B, HW, latent_dim]
-        k = self.proj(x)
-
-        # Expand query for each batch: [B, 1, latent_dim]
-        q = self.query.expand(B, -1, -1)
-
-        # Attention weights: [B, 1, HW]
-        attn = torch.softmax((q @ k.transpose(-2, -1)) / (self.latent_dim ** 0.5), dim=-1)
-
-        # Weighted sum: [B, 1, latent_dim] → [B, latent_dim]
-        pooled = (attn @ k).squeeze(1)
-
-        return pooled
-
 # -------------------------
 # Bayesian Hypernetwork
 # -------------------------
@@ -113,7 +82,6 @@ class HyperSegHead(nn.Module):
         w_count = int(torch.tensor(self.weight_shape).prod())
         b_count = int(torch.tensor(self.bias_shape).prod())
         self.total_params = w_count + b_count
-        self.attention_pooling = AttentionPool(in_channels=in_channels, latent_dim=in_channels)
 
         # use variational hypernet
         self.hyper = VariationalMultiHyperNet(cond_dim=in_channels,
@@ -172,9 +140,10 @@ class HyperSegHead(nn.Module):
         """
         feat: [B, C, H, W]
         returns: predictive mean [B,C,H,W], predictive var [B,C,H,W], kl [B]
+        ############################## Applying K= 4 here #################################################################################################
+        ############################## During inference please check if K can be sampled for 16 times ####################################################
         """
-        #cond = feat.mean(dim=[2,3])  # [B,C]
-        cond = self.attention_pooling(feat)
+        cond = feat.mean(dim=[2,3])  # [B,C]
         mu, logvar = self.hyper(cond)  # [B,P], [B,P]
         samples, kl_per_batch = self._sample_params(mu, logvar, K)  # [B,K,P], [B]
         params = self._unflatten(samples)  # {"w": [B,K,C_out,C_in,H,W], "b": [B,K,C_out]}

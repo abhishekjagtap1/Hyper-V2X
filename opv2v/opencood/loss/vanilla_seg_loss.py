@@ -15,6 +15,7 @@ class VanillaSegLoss(nn.Module):
         self.d_coe = args['d_coe']
         self.s_coe = args['s_coe']
         self.target = args['target']
+        self.kl_coefficent = 1e-3
 
         self.loss_func_static = \
             nn.CrossEntropyLoss(
@@ -45,6 +46,7 @@ class VanillaSegLoss(nn.Module):
 
         static_pred = output_dict['static_seg']
         dynamic_pred = output_dict['dynamic_seg']
+        kl = output_dict['kl']
 
         static_loss = torch.tensor(0, device=static_pred.device)
         dynamic_loss = torch.tensor(0, device=dynamic_pred.device)
@@ -69,10 +71,11 @@ class VanillaSegLoss(nn.Module):
             static_pred = rearrange(static_pred, 'b l c h w -> (b l) c h w')
             static_loss = self.loss_func_static(static_pred, static_gt)
 
-        total_loss = self.s_coe * static_loss + self.d_coe * dynamic_loss
+        total_loss = self.s_coe * static_loss + self.d_coe * dynamic_loss + self.kl_coefficent * kl
         self.loss_dict.update({'total_loss': total_loss,
                                'static_loss': static_loss,
-                               'dynamic_loss': dynamic_loss})
+                               'dynamic_loss': dynamic_loss,
+                               'KL_loss': kl})
 
         return total_loss
 

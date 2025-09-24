@@ -83,7 +83,7 @@ def setup_train(hypes):
     current_path = os.path.dirname(__file__)
     current_path = os.path.join(current_path, '../logs')
     ################################ Modifeied current path for lower CPU usage while loading IDE#############
-    current_path = '/data/s2/abhi_workspace/official_benchmarking_hyper_v2x'
+    #current_path = '/data/s2/abhi_workspace/official_benchmarking_hyper_v2x'
     #########################################################################################################
 
     full_path = os.path.join(current_path, folder_name)

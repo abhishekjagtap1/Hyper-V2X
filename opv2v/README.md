@@ -10,20 +10,31 @@ This repository contains the source code and data for our CoBEVT OPV2V track. Th
 
 ```bash
 # Clone repo
-
+-----------------------------------------------------------------------------------------------------------------
 # Single Vehicle Training with stochaisticity via Hypernetwork Experiments starts here
-# Used model is fax_fused_transformer.py
-
+# Used model is fax_fused_transformer.py 
 SinBEVT - Single Vehicle training using fax.yaml
-cd /data/s2/abhi_workspace/official_benchmarking_hyper_v2x/fax_2025_09_23_12_30_47
-
+fax_2025_09_23_15_27_10: cd /data/s2/abhi_workspace/official_benchmarking_hyper_v2x/fax_2025_09_23_15_27_10
+# Static BEV Segmenatation
 SinBevt - Single Vehicle training for static_map using fax_static.yaml
-cd /data/s2/abhi_workspace/official_benchmarking_hyper_v2x/fax_2025_09_23_13_23_20
-
+fax_2025_09_23_15_30_03: cd /data/s2/abhi_workspace/official_benchmarking_hyper_v2x/fax_2025_09_23_15_30_03
+----------------------------------------------------------------------------------------------------------------
 # Single Vehicle Training with stochaisticity Experiments End here
+###################################################################################################################
+# Official pre-training for SinBeVT Dynamic
+fax_2025_09_23_15_17_02: cd /data/s2/abhi_workspace/official_benchmarking_hyper_v2x/fax_2025_09_23_15_17_02
+# Official pre-tarining for SinBevt static 
+fax_2025_09_23_15_21_45: cd /data/s2/abhi_workspace/official_benchmarking_hyper_v2x/fax_2025_09_23_15_21_45
+###################################################################################################################
+-----------------------------------------------------------------------------------------------------------------
+# Training a BayesHyoerNet with Monte-Carlo Sampling - Directly on Cobevt - 
+# model used Byes_HyperV2X_no_NLL.py
+fax_2025_09_24_17_22_32: cd /data/s2/abhi_workspace/CoBEVT/opv2v/opencood/logs/fax_2025_09_24_17_22_32
 
-# Official pre-training for SinBeVT
-cd /data/s2/abhi_workspace/official_benchmarking_hyper_v2x/fax_2025_09_23_14_22_07
+# Training a BayesHperNet with Monte carlo samplin and Attention pooloins as contex vector - Directly on Cobevt 
+# model - Bayes_HyperV2X_with_attention_pooling.py
+fax_2025_09_24_18_12_31: cd /data/s2/abhi_workspace/CoBEVT/opv2v/opencood/logs/fax_2025_09_24_18_12_31
+
 
 cd CoBEVT/opv2v
 
