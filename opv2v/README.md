@@ -7,6 +7,19 @@ This repository contains the source code and data for our CoBEVT OPV2V track. Th
 3. The `additional` folder has the same structure of original OPV2V dataset. So unzip `additional.zip` and merge them with original opv2v data.
 4. Remove scenario `opv2v/train/2021_09_09_13_20_58`, as this scenario has some bug for camera data.
 ## <div align="center">**Installation**</div>
+```bash
+Official Benchmarking Experiments
+
+# Trained Sinbevt Official upto epoch91 and used it as epoch1 for CObevt trainig using official model
+#In short Official Reproduction of CObevt
+cd ./opencood/logs/Cobevt_official_dynamic
+
+# Used Sinbevt pretrained official epoch 91 
+# Training a Bayesian HyperNetwork Cobevt model from that
+cd ./opencoood/logs/Cobevt_BHN_Gaussian_Noise
+
+# 
+```
 
 ```bash
 # Clone repo
@@ -30,10 +43,16 @@ fax_2025_09_23_15_21_45: cd /data/s2/abhi_workspace/official_benchmarking_hyper_
 # Training a BayesHyoerNet with Monte-Carlo Sampling - Directly on Cobevt - 
 # model used Byes_HyperV2X_no_NLL.py
 fax_2025_09_24_17_22_32: cd /data/s2/abhi_workspace/CoBEVT/opv2v/opencood/logs/fax_2025_09_24_17_22_32
+Epoch 151: 39.8 Iou used condition vector GAP
 
 # Training a BayesHperNet with Monte carlo samplin and Attention pooloins as contex vector - Directly on Cobevt 
 # model - Bayes_HyperV2X_with_attention_pooling.py
 fax_2025_09_24_18_12_31: cd /data/s2/abhi_workspace/CoBEVT/opv2v/opencood/logs/fax_2025_09_24_18_12_31
+Epoch 151: around 37.8 Iou used condition vector attention pooling 
+# Training a BayesHperNet with Monte carlo samplin using Gaussian Noise as contex vector - Directly on Cobevt 
+# model BayesHyperV2X_gaussian_noise.py
+fax_2025_09_24_18_35_55: cd /data/s2/abhi_workspace/CoBEVT/opv2v/opencood/logs/fax_2025_09_24_18_35_55
+Epoch 151: 41.1 Iou used gaussian_noise
 
 
 cd CoBEVT/opv2v
