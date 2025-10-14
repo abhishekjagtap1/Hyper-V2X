@@ -21,7 +21,7 @@ def parse_args():
     parser.add_argument('--model_dir', required=True, help='path where checkpoint is stored (same as your train saved path)')
     parser.add_argument('--config', required=False, help='(optional) path to yaml config; if not provided the loader from train_utils will use model_dir metadata')
     parser.add_argument('--model_type', type=str, default='dynamic', choices=['dynamic','static'], help='which head to visualize')
-    parser.add_argument('--out_dir', type=str, default='inference_out', help='where to save visualizations')
+    parser.add_argument('--out_dir', type=str, default='inference_out/GAP_K8', help='where to save visualizations')
     parser.add_argument('--num_workers', type=int, default=4)
     parser.add_argument('--image_width', type=int, default=800)
     parser.add_argument('--image_height', type=int, default=600)
@@ -67,7 +67,7 @@ def main():
     os.makedirs(out_dir, exist_ok=True)
 
     for i, batch_data in enumerate(data_loader):
-        print('Processing idx', i)
+        #print('Processing idx', i)
         with torch.no_grad():
             # prepare & move to device
             torch.cuda.synchronize() if torch.cuda.is_available() else None

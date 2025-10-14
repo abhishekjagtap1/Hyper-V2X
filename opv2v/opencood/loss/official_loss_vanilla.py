@@ -15,12 +15,10 @@ class VanillaSegLoss(nn.Module):
         self.d_coe = args['d_coe']
         self.s_coe = args['s_coe']
         self.target = args['target']
-        self.kl_coefficent = 1e-3
 
         self.loss_func_static = \
             nn.CrossEntropyLoss(
-               weight=torch.Tensor([1., self.s_weights, self.l_weights]).cuda())
-
+                weight=torch.Tensor([1., self.s_weights, self.l_weights]).cuda())
         self.loss_func_dynamic = \
             nn.CrossEntropyLoss(
                 weight=torch.Tensor([1., self.d_weights]).cuda())
@@ -46,7 +44,6 @@ class VanillaSegLoss(nn.Module):
 
         static_pred = output_dict['static_seg']
         dynamic_pred = output_dict['dynamic_seg']
-        kl = output_dict['kl']
 
         static_loss = torch.tensor(0, device=static_pred.device)
         dynamic_loss = torch.tensor(0, device=dynamic_pred.device)
@@ -71,11 +68,10 @@ class VanillaSegLoss(nn.Module):
             static_pred = rearrange(static_pred, 'b l c h w -> (b l) c h w')
             static_loss = self.loss_func_static(static_pred, static_gt)
 
-        total_loss = self.s_coe * static_loss + self.d_coe * dynamic_loss + self.kl_coefficent * kl
+        total_loss = self.s_coe * static_loss + self.d_coe * dynamic_loss
         self.loss_dict.update({'total_loss': total_loss,
                                'static_loss': static_loss,
-                               'dynamic_loss': dynamic_loss,
-                               'KL_loss': kl}) #
+                               'dynamic_loss': dynamic_loss})
 
         return total_loss
 
@@ -97,28 +93,23 @@ class VanillaSegLoss(nn.Module):
         total_loss = self.loss_dict['total_loss']
         static_loss = self.loss_dict['static_loss']
         dynamic_loss = self.loss_dict['dynamic_loss']
-        Kl_loss = self.loss_dict['KL_loss']
 
         if pbar is None:
             print("[epoch %d][%d/%d], || Loss: %.4f || static Loss: %.4f"
-                  " || Dynamic Loss: %.4f || KL Loss: %.4f" % (
-                      epoch, batch_id + 1, batch_len,
-                      total_loss.item(), static_loss.item(),
-                      dynamic_loss.item(), Kl_loss.item()))
+                " || Dynamic Loss: %.4f" % (
+                    epoch, batch_id + 1, batch_len,
+                    total_loss.item(), static_loss.item(), dynamic_loss.item()))
         else:
             pbar.set_description("[epoch %d][%d/%d], || Loss: %.4f || static Loss: %.4f"
-                                 " || Dynamic Loss: %.4f || KL Loss: %.4f" % (
-                                     epoch, batch_id + 1, batch_len,
-                                     total_loss.item(), static_loss.item(),
-                                     dynamic_loss.item(), Kl_loss.item()))
+                  " || Dynamic Loss: %.4f" % (
+                      epoch, batch_id + 1, batch_len,
+                      total_loss.item(), static_loss.item(), dynamic_loss.item()))
+
 
         writer.add_scalar('Static_loss', static_loss.item(),
-                          epoch * batch_len + batch_id)
+                          epoch*batch_len + batch_id)
         writer.add_scalar('Dynamic_loss', dynamic_loss.item(),
-                          epoch * batch_len + batch_id)
-        writer.add_scalar('KL_loss', Kl_loss.item(),
-                          epoch * batch_len + batch_id)
-
+                          epoch*batch_len + batch_id)
 
 
 

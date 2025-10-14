@@ -132,3 +132,6 @@ dmypy.json
 *outputs*
 *egg**
 *logs*
+
+opv2v/inference_out
+opv2v/merge_results

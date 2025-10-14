@@ -15,12 +15,11 @@ class VanillaSegLoss(nn.Module):
         self.d_coe = args['d_coe']
         self.s_coe = args['s_coe']
         self.target = args['target']
-        self.kl_coefficent = 1e-3
+        self.beta = 1e-3
 
         self.loss_func_static = \
             nn.CrossEntropyLoss(
-               weight=torch.Tensor([1., self.s_weights, self.l_weights]).cuda())
-
+                weight=torch.Tensor([1., self.s_weights, self.l_weights]).cuda())
         self.loss_func_dynamic = \
             nn.CrossEntropyLoss(
                 weight=torch.Tensor([1., self.d_weights]).cuda())
@@ -44,81 +43,78 @@ class VanillaSegLoss(nn.Module):
         Loss dictionary.
         """
 
-        static_pred = output_dict['static_seg']
-        dynamic_pred = output_dict['dynamic_seg']
-        kl = output_dict['kl']
+        # Outputs from Bayesian hypernet forward
+        static_pred = output_dict['static_seg']  # [B, L, C, H, W]
+        dynamic_pred = output_dict['dynamic_seg']  # [B, L, C, H, W]
+        kl = output_dict['kl']  # scalar or [B]
 
-        static_loss = torch.tensor(0, device=static_pred.device)
-        dynamic_loss = torch.tensor(0, device=dynamic_pred.device)
+        static_loss = torch.tensor(0., device=static_pred.device)
+        dynamic_loss = torch.tensor(0., device=dynamic_pred.device)
 
-        # during training, we only need to compute the ego vehicle's gt loss
+        # Ground truth
         static_gt = gt_dict['gt_static']
         dynamic_gt = gt_dict['gt_dynamic']
         static_gt = rearrange(static_gt, 'b l h w -> (b l) h w')
         dynamic_gt = rearrange(dynamic_gt, 'b l h w -> (b l) h w')
 
+        # ---- Negative log likelihood (CrossEntropy) ----
         if self.target == 'dynamic':
             dynamic_pred = rearrange(dynamic_pred, 'b l c h w -> (b l) c h w')
-            dynamic_loss = self.loss_func_dynamic(dynamic_pred, dynamic_gt)
+            per_pixel_loss = self.loss_func_dynamic(dynamic_pred, dynamic_gt)
+            dynamic_loss = per_pixel_loss.mean()
 
         elif self.target == 'static':
             static_pred = rearrange(static_pred, 'b l c h w -> (b l) c h w')
-            static_loss = self.loss_func_static(static_pred, static_gt)
+            per_pixel_loss = self.loss_func_static(static_pred, static_gt)
+            static_loss = per_pixel_loss.mean()
 
-        else:
+        else:  # both
             dynamic_pred = rearrange(dynamic_pred, 'b l c h w -> (b l) c h w')
-            dynamic_loss = self.loss_func_dynamic(dynamic_pred, dynamic_gt)
             static_pred = rearrange(static_pred, 'b l c h w -> (b l) c h w')
-            static_loss = self.loss_func_static(static_pred, static_gt)
 
-        total_loss = self.s_coe * static_loss + self.d_coe * dynamic_loss + self.kl_coefficent * kl
-        self.loss_dict.update({'total_loss': total_loss,
-                               'static_loss': static_loss,
-                               'dynamic_loss': dynamic_loss,
-                               'KL_loss': kl}) #
+            dynamic_loss = self.loss_func_dynamic(dynamic_pred, dynamic_gt).mean()
+            static_loss = self.loss_func_static(static_pred, static_gt).mean()
+
+        # ---- ELBO objective ----
+        total_nll = self.s_coe * static_loss + self.d_coe * dynamic_loss
+        total_loss = total_nll + self.beta * kl
+
+        # Save for logging
+        self.loss_dict.update({
+            'total_loss': total_loss,
+            'static_loss': static_loss,
+            'dynamic_loss': dynamic_loss,
+            'KL_loss': kl,
+            'NLL_loss': total_nll
+        })
 
         return total_loss
 
     def logging(self, epoch, batch_id, batch_len, writer, pbar=None):
-        """
-        Print out  the loss function for current iteration.
-
-        Parameters
-        ----------
-        epoch : int
-            Current epoch for training.
-        batch_id : int
-            The current batch.
-        batch_len : int
-            Total batch length in one iteration of training,
-        writer : SummaryWriter
-            Used to visualize on tensorboard
-        """
         total_loss = self.loss_dict['total_loss']
         static_loss = self.loss_dict['static_loss']
         dynamic_loss = self.loss_dict['dynamic_loss']
-        Kl_loss = self.loss_dict['KL_loss']
+        kl_loss = self.loss_dict['KL_loss']
+        nll_loss = self.loss_dict['NLL_loss']
 
         if pbar is None:
-            print("[epoch %d][%d/%d], || Loss: %.4f || static Loss: %.4f"
-                  " || Dynamic Loss: %.4f || KL Loss: %.4f" % (
-                      epoch, batch_id + 1, batch_len,
-                      total_loss.item(), static_loss.item(),
-                      dynamic_loss.item(), Kl_loss.item()))
+            print(f"[epoch {epoch}][{batch_id + 1}/{batch_len}] || "
+                  f"Loss: {total_loss:.4f} || NLL: {nll_loss:.4f} || KL: {kl_loss:.4f} || "
+                  f"Static: {static_loss:.4f} || Dynamic: {dynamic_loss:.4f}")
         else:
-            pbar.set_description("[epoch %d][%d/%d], || Loss: %.4f || static Loss: %.4f"
-                                 " || Dynamic Loss: %.4f || KL Loss: %.4f" % (
-                                     epoch, batch_id + 1, batch_len,
-                                     total_loss.item(), static_loss.item(),
-                                     dynamic_loss.item(), Kl_loss.item()))
+            pbar.set_description(f"[epoch {epoch}][{batch_id + 1}/{batch_len}] || "
+                                 f"Loss: {total_loss:.4f} || NLL: {nll_loss:.4f} || KL: {kl_loss:.4f} || "
+                                 f"Static: {static_loss:.4f} || Dynamic: {dynamic_loss:.4f}")
 
+        writer.add_scalar('Total_loss', total_loss.item(),
+                          epoch * batch_len + batch_id)
+        writer.add_scalar('NLL_loss', nll_loss.item(),
+                          epoch * batch_len + batch_id)
+        writer.add_scalar('KL_loss', kl_loss.item(),
+                          epoch * batch_len + batch_id)
         writer.add_scalar('Static_loss', static_loss.item(),
                           epoch * batch_len + batch_id)
         writer.add_scalar('Dynamic_loss', dynamic_loss.item(),
                           epoch * batch_len + batch_id)
-        writer.add_scalar('KL_loss', Kl_loss.item(),
-                          epoch * batch_len + batch_id)
-
-
 
 

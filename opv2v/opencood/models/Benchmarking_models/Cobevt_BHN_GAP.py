@@ -72,7 +72,7 @@ class VariationalMultiHyperNet(nn.Module):
 # Segmentation Head
 # -------------------------
 class HyperSegHead(nn.Module):
-    def __init__(self, in_channels, num_classes, K, kernel_size=3):
+    def __init__(self, in_channels, num_classes, kernel_size=3):
         super().__init__()
         self.in_channels = in_channels
         self.num_classes = num_classes
@@ -83,7 +83,6 @@ class HyperSegHead(nn.Module):
         w_count = int(torch.tensor(self.weight_shape).prod())
         b_count = int(torch.tensor(self.bias_shape).prod())
         self.total_params = w_count + b_count
-        self.K = K
 
 
         # use variational hypernet
@@ -139,7 +138,7 @@ class HyperSegHead(nn.Module):
         out = out + params["b"].permute(1,0,2).unsqueeze(-1).unsqueeze(-1)  # add bias
         return out
 
-    def forward(self, feat, K, beta=1e-3):
+    def forward(self, feat, K=4, beta=1e-3):
         """
         feat: [B, C, H, W]
         returns: predictive mean [B,C,H,W], predictive var [B,C,H,W], kl [B]
@@ -154,20 +153,12 @@ class HyperSegHead(nn.Module):
         outs = self.forward_with_params(feat, params)  # [K,B,C,H,W]
         # compute predictive mean and variance over samples dimension
         pred_mean = outs.mean(0)   # [B,C,H,W]
-
-
-        # Both Epistemic and alleotary uncertainity
-        prob_outs =  torch.softmax(outs, dim=2)
-        
-        epistemic_unc = prob_outs.var(0, unbiased=False)  # [B,C,H,W]
-        aleatoric_unc = -(prob_outs.mean(0) * torch.log(prob_outs.mean(0)  + 1e-8)).sum(dim=1)  # [B,H,W]
-        aleatoric_unc = aleatoric_unc.unsqueeze(1)  # [B,1,H,W]
+        pred_var = outs.var(0, unbiased=False)  # [B,C,H,W]
 
         # average kl over batch to return scalar per batch or keep per-sample
-        kl = kl_per_batch.mean()
-        total_unc = epistemic_unc + aleatoric_unc  # scalar; you may prefer sum or mean depending on loss scaling
+        kl = kl_per_batch.mean()  # scalar; you may prefer sum or mean depending on loss scaling
 
-        return pred_mean, epistemic_unc, aleatoric_unc, total_unc, kl
+        return pred_mean, pred_var, kl
 
 
 
@@ -179,71 +170,59 @@ class HyperBevSegHead(nn.Module):
     Hypernetwork-based BEV segmentation head that matches the vanilla interface.
     Supports 'dynamic', 'static', or both targets.
     """
-    def __init__(self, target, in_channels, num_classes, K):
+    def __init__(self, target, in_channels, num_classes):
         super().__init__()
         self.target = target
-        self.K = K
 
         if self.target == "dynamic":
-            self.dynamic_head = HyperSegHead(in_channels, num_classes, K)
+            self.dynamic_head = HyperSegHead(in_channels, num_classes)
             self.static_head = None
         elif self.target == "static":
-            self.static_head = HyperSegHead(in_channels, num_classes, K)
+            self.static_head = HyperSegHead(in_channels, num_classes)
             self.dynamic_head = None
         else:
-            self.dynamic_head = HyperSegHead(in_channels, num_classes, K)
-            self.static_head = HyperSegHead(in_channels, num_classes, K)
+            self.dynamic_head = HyperSegHead(in_channels, num_classes)
+            self.static_head = HyperSegHead(in_channels, num_classes)
 
     def forward(self, x, b, l, K=None):
         out = {}
 
         # Dynamic-only
         if self.target == "dynamic":
-            dyn_mean, dyn_var, dyn_aleo, total_unc, dyn_kl = self.dynamic_head(x, K)
+            dyn_mean, dyn_var, dyn_kl = self.dynamic_head(x)
             dyn_mean = rearrange(dyn_mean, "(b l) c h w -> b l c h w", b=b, l=l)
             dyn_var = rearrange(dyn_var, "(b l) c h w -> b l c h w", b=b, l=l)
-            dyn_aleo = rearrange(dyn_aleo, "(b l) c h w -> b l c h w", b=b, l=l)
-            total_unc = rearrange(total_unc, "(b l) c h w -> b l c h w", b=b, l=l)
 
             out["dynamic_seg"] = dyn_mean
             out["static_seg"] = torch.zeros_like(dyn_mean)
             out["dynamic_var"] = dyn_var
-            out["dynamic_aleo"] = dyn_aleo
-            out["total_unc"] = total_unc
             out["kl"] = dyn_kl
 
         # Static-only
         elif self.target == "static":
-            stat_mean, stat_var, stat_aleo, stat_kl = self.static_head(x, K)
+            stat_mean, stat_var, stat_kl = self.static_head(x)
             stat_mean = rearrange(stat_mean, "(b l) c h w -> b l c h w", b=b, l=l)
             stat_var = rearrange(stat_var, "(b l) c h w -> b l c h w", b=b, l=l)
-            stat_aleo = rearrange(stat_aleo, "(b l) c h w -> b l c h w", b=b, l=l)
 
             out["static_seg"] = stat_mean
             out["dynamic_seg"] = torch.zeros_like(stat_mean)
             out["static_var"] = stat_var
-            out["static_aleo"] = stat_aleo
             out["kl"] = stat_kl
 
         # Both dynamic and static
         else:
-            dyn_mean, dyn_var, dyn_aleo, dyn_kl = self.dynamic_head(x, K)
-            stat_mean, stat_var, stat_aleo, stat_kl = self.static_head(x, K)
+            dyn_mean, dyn_var, dyn_kl = self.dynamic_head(x)
+            stat_mean, stat_var, stat_kl = self.static_head(x)
 
             dyn_mean = rearrange(dyn_mean, "(b l) c h w -> b l c h w", b=b, l=l)
             dyn_var = rearrange(dyn_var, "(b l) c h w -> b l c h w", b=b, l=l)
-            dyn_aleo = rearrange(dyn_aleo, "(b l) c h w -> b l c h w", b=b, l=l)
             stat_mean = rearrange(stat_mean, "(b l) c h w -> b l c h w", b=b, l=l)
             stat_var = rearrange(stat_var, "(b l) c h w -> b l c h w", b=b, l=l)
-            stat_aleo = rearrange(stat_aleo, "(b l) c h w -> b l c h w", b=b, l=l)
-
 
             out["dynamic_seg"] = dyn_mean
             out["static_seg"] = stat_mean
             out["dynamic_var"] = dyn_var
             out["static_var"] = stat_var
-            out["static_aleo"] = stat_aleo
-            out["dynamic_aleo"] = dyn_aleo
             out["kl"] = 0.5 * (dyn_kl + stat_kl)
 
         return out
@@ -298,9 +277,6 @@ class STTF(nn.Module):
 class CorpBEVT(nn.Module):
     def __init__(self, config):
         super(CorpBEVT, self).__init__()
-        ##################################################################################################
-        self.K = 4
-        ###############################################################################################
         self.max_cav = config['max_cav']
         # encoder params
         self.encoder = ResnetEncoder(config['encoder'])
@@ -333,8 +309,7 @@ class CorpBEVT(nn.Module):
         self.target = config['target']
         self.seg_head = HyperBevSegHead(self.target,
                                         config['seg_head_dim'],
-                                        config['output_class'],
-                                        self.K)
+                                        config['output_class'])
 
         #self.seg_head = BevSegHead(self.target,
          #                          config['seg_head_dim'],
@@ -381,6 +356,6 @@ class CorpBEVT(nn.Module):
         x = rearrange(x, 'b l c h w -> (b l) c h w') # 1, 32, 256, 256
         b = x.shape[0]
 
-        output_dict = self.seg_head(x, b, 1, self.K) # 1, 1, 2, 256, 256 vanilla head
+        output_dict = self.seg_head(x, b, 1) # 1, 1, 2, 256, 256 vanilla head
 
         return output_dict

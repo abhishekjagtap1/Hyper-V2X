@@ -1,5 +1,5 @@
 """
-Implementation of Brady Zhou's cross view transformer
+Implementation of GyperNetwork inspired HyperDM: Estimating Both uncertainity in single model
 """
 import einops
 import numpy as np
@@ -28,6 +28,22 @@ import torch.nn.functional as F
 from einops import rearrange
 import math
 
+
+"""
+This model is used to train Hyper_V2X_IV folder results in logs
+1) Added Probabilities for epistemic var since logits was not accurate 
+2) Added Alleotary uncertainity support 
+3) Total Uncertainity
+4) The model outputs 5 items: Pred_mean_seg, Epistemic, alleotary, Total_uncertainity and KL
+5) Note this is used in conjucture with loss function stored at Hyper_V2X_loss
+6) Trained using K = 4, now little flexible to use K
+
+
+Inference:
+1) Support for visulization of all uncertainity required adopt the code in shata_inference.py to do it
+2) Lets see if I can make it this time
+
+"""
 
 # -------------------------
 # Bayesian Hypernetwork

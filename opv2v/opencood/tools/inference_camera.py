@@ -53,7 +53,7 @@ def main():
     lane_ave_iou = []
 
     for i, batch_data in enumerate(data_loader):
-        print(i)
+        #print(i)
         with torch.no_grad():
             torch.cuda.synchronize()
 
