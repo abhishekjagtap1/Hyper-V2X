@@ -1,6 +1,6 @@
 name: corpbevt_static # only used for demonstration data api
-root_dir: '/data/opv2v/train'
-validate_dir: '/data/opv2v/validate'
+root_dir: '/data/s2/semantic-opv2v/train'
+validate_dir: '/data/s2/semantic-opv2v/validate'
 
 
 train_params:
@@ -54,6 +54,8 @@ model:
       image_width: *image_width
       image_height: *image_height
       id_pick: [1, 2, 3]
+
+    compression: 0 # compression rate
 
     decoder:
       input_dim: 128

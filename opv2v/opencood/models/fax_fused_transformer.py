@@ -8,7 +8,6 @@ from opencood.models.sub_modules.fax_modules import FAXModule
 from opencood.models.backbones.resnet_ms import ResnetEncoder
 from opencood.models.sub_modules.naive_decoder import NaiveDecoder
 from opencood.models.sub_modules.bev_seg_head import BevSegHead
-from opencood.models.Bayesian_HyperV2X_model import HyperSegHead, HyperBevSegHead
 
 
 class FaxFusedTransformer(nn.Module):
@@ -28,17 +27,9 @@ class FaxFusedTransformer(nn.Module):
         self.decoder = NaiveDecoder(decoder_params)
 
         self.target = config['target']
-        ################### Original Seg Head ##########################################################
-        #self.seg_head = BevSegHead(self.target,
-         #                          config['seg_head_dim'],
-          #                         config['output_class'])
-        ################################################################################################
-        ############# Bayesian HyperNetwork Head for Stochaistic BEV segmentation ######################
-        self.seg_head = HyperBevSegHead(self.target,
-                                        config['seg_head_dim'],
-                                        config['output_class'])
-        print("Training HyperBevSegHead for Sinbevt single vehicle pretraining")
-        ################################################################################################
+        self.seg_head = BevSegHead(self.target,
+                                   config['seg_head_dim'],
+                                   config['output_class'])
 
     def forward(self, batch_dict):
         x = batch_dict['inputs']
@@ -47,6 +38,7 @@ class FaxFusedTransformer(nn.Module):
         x = self.encoder(x)
         batch_dict.update({'features': x})
         x = self.fax(batch_dict)
+        #print("training FaxFusedTransformer")
 
         # dynamic head
         x = self.decoder(x)

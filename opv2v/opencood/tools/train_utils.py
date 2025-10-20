@@ -306,7 +306,7 @@ def save_bev_seg_binary(output_dict,
     """
 
     if test:
-        output_folder = os.path.join(output_dir, 'test_vis')
+        output_folder = os.path.join(output_dir, 'test_vis_old')
     else:
         output_folder = os.path.join(output_dir, 'train_vis', str(epoch))
 

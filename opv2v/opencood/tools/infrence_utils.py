@@ -107,7 +107,7 @@ def camera_uncertainty_visualization(model_mean_var_out,
     batch_dict: the original batch (e.g. batch_data['ego'])
     Saves visualization to save_path/test_vis_uncert/%04d.png
     """
-    output_folder = os.path.join(save_path, 'test_vis_uncert')
+    output_folder = os.path.join(save_path, 'test_vis_uncert_old')
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
@@ -316,7 +316,7 @@ def camera_inference_visualization(output_dict,
     image_width = 800
     image_height = 600
 
-    output_folder = os.path.join(output_dir, 'test_vis')
+    output_folder = os.path.join(output_dir, 'test_vis_shata_compression_2')
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 

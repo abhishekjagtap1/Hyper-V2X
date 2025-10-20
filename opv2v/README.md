@@ -22,6 +22,11 @@ cd ./opencoood/logs/Cobevt_BHN_Gaussian_Noise
 ```
 
 ```bash
+Static_HYper_V2X_IV model
+CUDA_VISIBLE_DEVICES=1 python opencood/tools/train_camera.py --hypes_yaml ./opencood/hypes_yaml/opcamera/corpbevt_static.yaml 
+
+
+Storage: /data/s2/abhi_workspace/CoBEVT/opv2v/opencood/logs/corpbevt_static_2025_10_14_15_56_21
 # Clone repo
 -----------------------------------------------------------------------------------------------------------------
 # Single Vehicle Training with stochaisticity via Hypernetwork Experiments starts here

@@ -27,8 +27,8 @@ def main():
     if not os.path.exists(opt.output_path):
         os.makedirs(opt.output_path)
 
-    dynamic_path = os.path.join(opt.dynamic_path, 'test_vis')
-    static_path = os.path.join(opt.static_path, 'test_vis')
+    dynamic_path = os.path.join(opt.dynamic_path, 'test_vis_old')
+    static_path = os.path.join(opt.static_path, 'test_vis_old')
 
     dynamic_figures = sorted(os.listdir(dynamic_path))
     print(len(dynamic_figures))
