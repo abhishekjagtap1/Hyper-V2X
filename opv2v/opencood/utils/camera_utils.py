@@ -25,8 +25,10 @@ def load_rgb_from_files(camera_list):
     """
     camera_dict = OrderedDict()
     for (i, camera_file) in enumerate(camera_list):
-        camera_dict['camera%d' % i] = cv2.imread(camera_file)
+        camera_dict['camera%d' % i]= cv2.imread(camera_file)
 
+        # camera_dict['camera%d' % i]['value'] = cv2.imread(camera_file)
+        # camera_dict['camera%d' % i]['location'] = camera_file
     return camera_dict
 
 

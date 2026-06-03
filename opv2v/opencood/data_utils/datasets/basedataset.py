@@ -279,6 +279,7 @@ class BaseDataset(Dataset):
             data[cav_id]['camera_np'] = \
                 load_rgb_from_files(
                     cav_content[timestamp_key_delay]['cameras'])
+            #print(cav_content[timestamp_key_delay]['cameras'])
             for file_extension in self.add_data_extension:
                 # todo: currently not considering delay!
                 # output should be only yaml or image

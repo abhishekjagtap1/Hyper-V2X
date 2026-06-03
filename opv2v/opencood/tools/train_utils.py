@@ -264,16 +264,36 @@ def setup_lr_schedular(hypes, optimizer, n_iter_per_epoch):
 
 
 def to_device(inputs, device):
+    skip_keys={'agent_ids', 'ego_id', 'raw_inputs'}
+
+    # if isinstance(inputs, list):
+    #     return [to_device(x, device) for x in inputs]
+    # elif isinstance(inputs, dict):
+    #     return {k: to_device(v, device) for k, v in inputs.items()}
+    # else:
+    #     if isinstance(inputs, int) or isinstance(inputs, float) \
+    #             or isinstance(inputs, str):
+    #         return inputs
+    #     return inputs.to(device)
+
+    if isinstance(inputs, dict):
+        return {
+            k: (inputs[k] if k in skip_keys else to_device(v, device))
+            for k, v in inputs.items()
+        }
+
     if isinstance(inputs, list):
         return [to_device(x, device) for x in inputs]
-    elif isinstance(inputs, dict):
-        return {k: to_device(v, device) for k, v in inputs.items()}
-    else:
-        if isinstance(inputs, int) or isinstance(inputs, float) \
-                or isinstance(inputs, str):
-            return inputs
+
+    if isinstance(inputs, tuple):
+        return tuple(to_device(x, device) for x in inputs)
+
+    # Only move real torch tensors
+    if torch.is_tensor(inputs):
         return inputs.to(device)
 
+    # Leave everything else on CPU (NumPy arrays, scalars, custom objects, etc.)
+    return inputs
 
 def save_bev_seg_binary(output_dict,
                         batch_dict,

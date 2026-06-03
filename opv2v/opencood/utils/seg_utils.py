@@ -50,6 +50,92 @@ def mean_IU(eval_segm, gt_segm):
 
     return IU
 
+import torch
+
+import numpy as np
+
+def ece_dynamic(
+    gt: np.ndarray,                # (256,256) ground truth (0=background, 1=dynamic)
+    pred: np.ndarray,              # (1,2,256,256) softmax probabilities
+    num_bins,
+    binning_strategy: str = "equal_size",  # or "equal_population"
+) -> float:
+    """
+    Compute Expected Calibration Error (ECE) for the DYNAMIC class (channel=1)
+    using NumPy only.
+
+    Returns
+    -------
+    float : scalar ECE value
+    """
+    assert pred.shape[0] == 2, f"pred must be (2,H,W), got {pred.shape}"
+    assert gt.shape == pred.shape[-2:], f"gt must match pred spatial dims, got {gt.shape}"
+
+    # dynamic class probabilities
+    p_dyn = pred[1]  # (H, W)
+
+    # flatten
+    p = p_dyn.flatten()  # (N,)
+    y = gt.flatten()     # (N,)
+
+    # === Brier score ===
+    #brier = np.mean((p - y) ** 2)
+    # binary labels: 1 if dynamic else 0
+    y_dyn = (y == 1).astype(np.float32)
+
+    # choose bin boundaries
+    if binning_strategy == "equal_size":
+        bin_edges = np.linspace(0.0, 1.0, num_bins + 1)
+    elif binning_strategy == "equal_population":
+        sorted_p = np.sort(p)
+        n = len(p)
+        bin_edges = np.interp(np.linspace(0, n, num_bins + 1),
+                              np.arange(n),
+                              sorted_p)
+        bin_edges[0], bin_edges[-1] = 0.0, 1.0
+    else:
+        raise ValueError("binning_strategy must be 'equal_size' or 'equal_population'")
+
+    ece = 0.0
+
+    # compute |confidence - accuracy| weighted by bin proportion
+    for i in range(num_bins):
+        lower, upper = bin_edges[i], bin_edges[i + 1]
+        in_bin = (p > lower) & (p <= upper) if i > 0 else (p >= lower) & (p <= upper)
+
+        if np.any(in_bin):
+            prop = np.mean(in_bin)
+            acc  = np.mean(y_dyn[in_bin])
+            conf = np.mean(p[in_bin])
+            ece += abs(conf - acc) * prop
+
+    return float(ece)
+
+def brier_dynamic(
+    gt: np.ndarray,                # (256,256) ground truth (0=background, 1=dynamic)
+    pred: np.ndarray,              # (1,2,256,256) softmax probabilities
+) -> float:
+    """
+    Compute Expected Calibration Error (ECE) for the DYNAMIC class (channel=1)
+    using NumPy only.
+
+    Returns
+    -------
+    float : scalar ECE value
+    """
+    assert pred.shape[0] == 2, f"pred must be (2,H,W), got {pred.shape}"
+    assert gt.shape == pred.shape[-2:], f"gt must match pred spatial dims, got {gt.shape}"
+
+    # dynamic class probabilities
+    p_dyn = pred[1]  # (H, W)
+
+    # flatten
+    p = p_dyn.flatten()  # (N,)
+    y = gt.flatten()     # (N,)
+
+    # === Brier score ===
+    brier = np.mean((p - y) ** 2)
+    return brier
 
 '''
 Auxiliary functions used during evaluation.
@@ -155,6 +241,128 @@ def cal_iou_training(batch_dict, output_dict):
         return iou_dynamic, iou_static
 
 
+def cal_ece_brier_score(batch_dict, output_dict):
+    """
+    Calculate ece
+
+    Parameters
+    ----------
+    batch_dict: dict
+        The data that contains the gt.
+
+    output_dict : dict
+        The output directory with predictions.
+
+    Returns
+    -------
+    The ece for dynamic bev map.
+    """
+
+    batch_size = batch_dict['ego']['gt_static'].shape[0]
+
+    for i in range(batch_size):
+        gt_dynamic = \
+            batch_dict['ego']['gt_dynamic'].detach().cpu().data.numpy()[i, 0]
+        gt_dynamic = np.array(gt_dynamic, dtype=np.int)
+
+        pred_dynamic = \
+            output_dict['dynamic_prob'].detach().cpu().data.numpy()[i]
+        pred_dynamic = np.array(pred_dynamic, dtype=np.int)
+
+        return ece_dynamic(gt_dynamic,pred_dynamic,num_bins=30), ece_dynamic(gt_dynamic,pred_dynamic, num_bins=30,binning_strategy='equal_population'),brier_dynamic(gt_dynamic,pred_dynamic)
+
+
+
+def cal_nll_brier_score(batch_dict, output_dict):
+    """
+    Calculate nll
+
+    Parameters
+    ----------
+    batch_dict: dict
+        The data that contains the gt.
+
+    output_dict : dict
+        The output directory with predictions.
+
+    Returns
+    -------
+    The nll for dynamic bev map.
+    """
+
+    batch_size = batch_dict['ego']['gt_static'].shape[0]
+
+    for i in range(batch_size):
+        gt_dynamic = \
+            batch_dict['ego']['gt_dynamic'].detach().cpu().data.numpy()[i, 0]
+        gt_dynamic = np.array(gt_dynamic, dtype=np.int)
+
+        pred_dynamic = \
+            output_dict['dynamic_prob'].detach().cpu().data.numpy()[i]
+        pred_dynamic = np.array(pred_dynamic, dtype=np.int)
+
+        return nll_brier(gt_dynamic,pred_dynamic)
+
+from sklearn.metrics import brier_score_loss, log_loss
+
+def nll_brier(gt_dynamic, pred_dynamic, ignore_index=255):
+    """
+    gt_dynamic:   (256, 256) with {0,1,255}
+    pred_dynamic: (2, 256, 256) logits
+
+    Returns:
+        nll, brier
+    """
+    print(gt_dynamic.shape, pred_dynamic.shape)  # (256,256) (2,256,256)
+
+    # ---- derive prediction + confidence from logits ----
+    l0 = pred_dynamic[0]      # (256,256)
+    l1 = pred_dynamic[1]      # (256,256)
+
+    # stable softmax over 2 classes
+    mx = np.maximum(l0, l1)
+    exp0 = np.exp(l0 - mx)
+    exp1 = np.exp(l1 - mx)
+    sum_exp = exp0 + exp1
+
+    p0 = exp0 / sum_exp       # P(class 0)
+    p1 = exp1 / sum_exp       # P(class 1)
+
+    # predicted class and its confidence
+    pred = (p1 > p0).astype(np.int64)   # p_np equivalent
+    conf = np.maximum(p0, p1)           # conf for predicted class (like in _process_uncertainty)
+
+    # ---- apply valid mask, flatten (exact same pattern) ----
+    t_np = gt_dynamic
+    p_np = pred
+
+    valid_mask = t_np != ignore_index
+    flat_t = t_np[valid_mask].flatten()
+    flat_p = p_np[valid_mask].flatten()
+    flat_conf = conf[valid_mask].flatten()
+
+    if flat_t.size == 0:
+        print("No valid pixels for NLL/Brier")
+        return np.nan, np.nan
+
+    # if you want to mimic clamp_and_log_values: just clamp here
+    flat_conf = np.clip(flat_conf, 1e-7, 1 - 1e-7)
+
+    # ---- same as in _process_uncertainty ----
+    acc_map = (flat_p == flat_t).astype(np.uint8)
+    brier = brier_score_loss(acc_map, flat_conf)
+
+    try:
+        nll = log_loss(acc_map, flat_conf, labels=[0, 1])
+    except ValueError as e:
+        if "Only one class" in str(e):
+            nll = np.nan
+            print("Single-class NLL error in nll_brier")
+        else:
+            raise
+
+    return nll, brier
+    
 class EvalSegErr(Exception):
     def __init__(self, value):
         self.value = value

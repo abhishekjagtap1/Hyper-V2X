@@ -1,0 +1,21 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run inference_uncertainty.py (uncertainity_benchmark)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "opv2v/opencood/tools/inference_all_uncertainity.py",
+            "console": "integratedTerminal",
+            "env": {"name":"CUDA_VISIBLE_DEVICES", "value":"0"},
+            "args": [
+                "--model_dir",
+                "/data/s2/abhi_workspace/sanath/Hyper-V2X/opv2v/opencood/logs/Hyper_V2X_IV",
+                "--config",
+                "/data/s2/abhi_workspace/sanath/Hyper-V2X/opv2v/opencood/logs/Hyper_V2X_IV",                
+            ],
+            "cwd": "/data/s2/abhi_workspace/sanath/Hyper-V2X",
+            "python": "/home/sysgen/.conda/envs/uncertainity_benchmark/bin/python"
+        }
+    ]
+}

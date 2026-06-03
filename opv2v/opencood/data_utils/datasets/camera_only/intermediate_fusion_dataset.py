@@ -20,6 +20,7 @@ class CamIntermediateFusionDataset(base_camera_dataset.BaseCameraDataset):
         self.visible = params['train_params']['visible']
 
     def __getitem__(self, idx):
+        
         data_sample = self.get_sample_random(idx)
 
         processed_data_dict = OrderedDict()
@@ -57,13 +58,15 @@ class CamIntermediateFusionDataset(base_camera_dataset.BaseCameraDataset):
         # (1, h, w)
         gt_dynamic = []
 
+        agent_ids = []
+
         # loop over all CAVs to process information
         for cav_id, selected_cav_base in data_sample.items():
             distance = common_utils.cav_distance_cal(selected_cav_base,
                                                      ego_lidar_pose)
             if distance > opencood.data_utils.datasets.COM_RANGE:
                 continue
-
+            print(idx)
             selected_cav_processed = \
                 self.get_single_cav(selected_cav_base)
 
@@ -74,6 +77,9 @@ class CamIntermediateFusionDataset(base_camera_dataset.BaseCameraDataset):
                 selected_cav_processed['camera']['extrinsic'])
             transformation_matrix.append(
                 selected_cav_processed['transformation_matrix'])
+            
+            agent_ids.append(cav_id)  # 👈 track which CAV this row belongs to
+
 
             if cav_id == ego_id:
                 gt_dynamic.append(
@@ -103,7 +109,10 @@ class CamIntermediateFusionDataset(base_camera_dataset.BaseCameraDataset):
             'camera_intrinsic': camera_intrinsic,
             'camera_extrinsic': camera2ego,
             'gt_dynamic': gt_dynamic,
-            'gt_static': gt_static})
+            'gt_static': gt_static,
+            'agent_ids': np.array(agent_ids),     # 👈 now you can log/inspect
+            'ego_id': ego_id,                     # 👈 and know who is ego
+            'ego_index': 0 })                       # 👈 ego is at index 0
 
         return processed_data_dict
 
@@ -259,6 +268,12 @@ class CamIntermediateFusionDataset(base_camera_dataset.BaseCameraDataset):
         # used to save each scenario's agent number
         record_len = []
 
+        # NEW: hold your three extras (per-sample)
+        agent_ids_all_batch = []
+        ego_id_all_batch = []
+        raw_inputs_list = []  # keep raw camera_data per sample
+
+
         for i in range(len(batch)):
             ego_dict = batch[i]['ego']
 
@@ -286,6 +301,25 @@ class CamIntermediateFusionDataset(base_camera_dataset.BaseCameraDataset):
             # pairwise matrix
             pairwise_t_matrix_all_batch.append(ego_dict['pairwise_t_matrix'])
 
+            # pass through IDs (if present)
+            agent_ids_all_batch.append(ego_dict.get('agent_ids', None))  # NEW ✅
+            ego_id_all_batch.append(ego_dict.get('ego_id', None))        # NEW ✅
+            # keep raw per-sample copy BEFORE any concat/torch
+            # raw_inputs_list.append(camera_data)  # NEW ✅
+
+
+            # Build dict {agent_id: raw_image} directly
+            maybe_ids = ego_dict.get('agent_ids', None)
+            camera_data = ego_dict['camera_data']
+
+            if maybe_ids is not None:
+                # directly map each agent_id to its corresponding image
+                raw_inputs = {aid: img for aid, img in zip(maybe_ids, camera_data)}
+            else:
+                # fallback if no IDs given
+                raw_inputs = {f'cam_{i}': img for i, img in enumerate(camera_data)}
+
+            raw_inputs_list.append(raw_inputs)
         # (B*L, 1, M, H, W, C)
         cam_rgb_all_batch = torch.from_numpy(
             np.concatenate(cam_rgb_all_batch, axis=0)).unsqueeze(1).float()
@@ -317,7 +351,12 @@ class CamIntermediateFusionDataset(base_camera_dataset.BaseCameraDataset):
             'gt_dynamic': gt_dynamic_all_batch,
             'transformation_matrix': transformation_matrix_all_batch,
             'pairwise_t_matrix': pairwise_t_matrix_all_batch,
-            'record_len': record_len
+            'record_len': record_len,
+
+            # --- ONLY THESE THREE ARE NEW ---
+            'agent_ids': agent_ids_all_batch,   # list per sample (batch-sized)
+            'ego_id': ego_id_all_batch,         # list per sample (batch-sized)
+            'raw_inputs': raw_inputs_list,      # list per sample; each is the raw camera_data np array
         })
 
         return output_dict

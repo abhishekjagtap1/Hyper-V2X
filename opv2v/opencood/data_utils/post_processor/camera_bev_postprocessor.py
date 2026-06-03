@@ -77,12 +77,12 @@ class CameraBevPostprocessor(BasePostprocessor):
 
         static_prob, static_map = self.softmax_argmax(static_seg)
         dynamic_prob, dynamic_map = self.softmax_argmax(dynamic_seg)
-
         output_dict.update({
             'static_prob': static_prob,
             'static_map': static_map,
             'dynamic_map': dynamic_map,
             'dynamic_prob': dynamic_prob
+            
         })
 
         return output_dict
