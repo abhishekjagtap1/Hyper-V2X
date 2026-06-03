@@ -139,7 +139,6 @@ class HyperSegHead(nn.Module):
         """
         cond = feat.mean(dim=[2, 3])  # [B,C]
         B, C, H, W = feat.shape
-        # cond = torch.randn(B, self.in_channels, device=feat.device, dtype=feat.dtype)
         mu, logvar = self.hyper(cond)  # [B,P], [B,P]
         samples, kl_per_batch = self._sample_params(mu, logvar, K)  # [B,K,P], [B]
         params = self._unflatten(samples)  # {"w": [B,K,C_out,C_in,H,W], "b": [B,K,C_out]}
@@ -291,7 +290,7 @@ class CorpBEVT(nn.Module):
     def __init__(self, config):
         super(CorpBEVT, self).__init__()
         ##################################################################################################
-        self.K = 4  # 100 #50 ##20 #4
+        self.K = 4  #4 #20 #40
         ###############################################################################################
         self.max_cav = config['max_cav']
         # encoder params

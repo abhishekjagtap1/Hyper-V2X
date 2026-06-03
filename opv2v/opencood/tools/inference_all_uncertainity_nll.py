@@ -3,6 +3,7 @@ import os
 import sys
 import numpy as np
 import torch
+
 # -----------------------------
 # REMOVE BAD PATHS
 # -----------------------------
@@ -11,12 +12,13 @@ for p in bad_paths:
     if p in sys.path:
         sys.path.remove(p)
 
-new_path = '/data/s2/abhi_workspace/sanath/Hyper-V2X/opv2v'
+new_path = '/data/s2/abhi_workspace/PhD_IV_2026_abhi/Hyper-V2X/opv2v'
 if new_path not in sys.path:
     sys.path.insert(0, new_path)
 
 
 from torch.utils.data import DataLoader
+from opencood.visualization.vis_utils import camera_uncertainty_visualization
 
 import opencood.hypes_yaml.yaml_utils as yaml_utils
 from opencood.tools import train_utils
@@ -63,6 +65,11 @@ def parse_args():
     parser.add_argument('--model_dir', required=True)
     parser.add_argument('--num_workers', type=int, default=4)
     parser.add_argument('--out_dir', type=str, default='inference_out')
+    parser.add_argument(
+        '--save_vis',
+        action='store_true',
+        help='Save visualization outputs'
+    )
     return parser.parse_args()
 
 
@@ -94,6 +101,7 @@ def main():
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
+    print(model)
 
     _, model = train_utils.load_saved_model(args.model_dir, model)
     model.eval()
@@ -127,7 +135,22 @@ def main():
                     model_out = model(batch_data['ego'])
                     post_output = dataset.post_process(batch_data['ego'], model_out)
 
+                    if args.save_vis:
+                        vis_file = camera_uncertainty_visualization(
+                            model_out,
+                            post_output,
+                            batch_data['ego'],
+                            os.path.join(args.model_dir,args.out_dir),
+                            i,
+                            model_type='dynamic',
+                            image_width=800,
+                            image_height=600,
+                        )
+
+                    # Segmentation Metric
                     iou_d, iou_s = cal_iou_training(batch_data, post_output)
+
+                    ##### Uncertainty Metrics #########
                     ece, ece_eqp, _ = cal_ece_brier_score(batch_data, post_output)
                     nll, brier = cal_nll_brier_score(batch_data, post_output)
 

@@ -1,169 +1,192 @@
-# CoBEVT: Cooperative Bird's Eye View Semantic Segmentation with Sparse Transformers [CORL2022] 
-
-[![paper](https://img.shields.io/badge/arXiv-Paper-<COLOR>.svg)](https://arxiv.org/pdf/2207.02202.pdf)
-[![supplement](https://img.shields.io/badge/Supplementary-Material-red)](https://arxiv.org/pdf/2207.02202.pdf)
-[![video](https://img.shields.io/badge/Video-Presentation-F9D371)]()
-
-This is the official implementation of CoRL2022 paper "CoBEVT: Cooperative Bird's Eye View Semantic Segmentation with Sparse Transformers".
-[Runsheng Xu](https://derrickxunu.github.io/), [Zhengzhong Tu](https://github.com/vztu), [Hao Xiang](https://xhwind.github.io/), [Wei Shao](https://www.linkedin.com/in/wei-shao-94972295/), [Bolei Zhou](https://boleizhou.github.io/), [Jiaqi Ma](https://mobility-lab.seas.ucla.edu/)
-
-UCLA, UT-Austin
-
-<br>
-
-<div align="center"><img src="images/CorpBEVT_Overview-1.png" width="85%"/></div>
 <div align="center">
-<b>Overview of CoBEVT</b>
+
+# Hyper-V2X: Hypernetworks for Estimating Epistemic and Aleatoric Uncertainty in Cooperative Bird's-Eye-View Semantic Segmentation
+  <h3 align="center">IEEE IV 2024 Oral</h3>
+  <p align="center">
+    <a href="">Abhishek Dinkar Jagtap</a>
+    &nbsp;·&nbsp;
+    <a href="">Sanath Tiptur Sadashivaiah</a>
+    &nbsp;·&nbsp;
+    <a href="">Andreas Festag</a>
+    &nbsp;·&nbsp;
+
+[![Project Page](https://img.shields.io/badge/Project-Page-blue.svg)](https://abhishekjagtap1.github.io/HyperV2X/)&nbsp;&nbsp;
+[![arXiv](https://img.shields.io/badge/arXiv-Paper-red.svg)](https://arxiv.org/abs/2605.21309v1)&nbsp;&nbsp;
+[![HuggingFace Model](https://img.shields.io/badge/🤗%20Model-HuggingFace-yellow.svg)](https://huggingface.co/Uchihadj/Hyper-V2X)
+
+<p align="center">
+    <img src="images/hyper_v2x_demo.gif" alt="Hyper-V2X GIF" width="850" />
+</p>
+
+
+Hyper-V2X conditions a Bayesian hypernetwork on fused multi-agent BEV features to generate stochastic decoder weights, enabling calibrated epistemic and aleatoric uncertainty estimation in cooperative Bird's-Eye-View semantic segmentation.
+
 </div>
-<br>
-
-
-## Introduction
-
-## Hyper_v2x with MC sampling folder trained at : fax_2025_09_15_16_31_59
-At Epoch 0 this gave around 0.0933 something dynmaic IOU
-## Hyper V2X genratinhg K weights set FAX_2025_09_16_14_07_54
-This is the best model so far yeilding nearly 10 times better results than vanilla
-
-At epoch 0, the validation loss is 5.539064,the dynamic iou is 0.145597, the road iou is 0.000000the lane ious is 0.000000
-
-## HyperV2x includiong decoder generating weights is fax_2025_09_16_14_59_13
-
-## Hyper_v2X direct with K=8 fax_2025_09_17_17_19_50
-
-## Hyper_v2X direct with attention pooling instead of global average pooling k= 4 fax_2025_09_18_10_21_08
 
 
 
-CoBEVT is the first generic multi-agent multi-camera perception framework that can cooperatively generate BEV
-map predictions. The core component of CoBEVT, named fused axial
-attention or FAX module,  can capture sparsely local and global spatial interactions across views and agents. We 
-achieve SOTA performance both on [OPV2V](https://mobility-lab.seas.ucla.edu/opv2v/) and [nuScenes](https://www.nuscenes.org/) dataset with **real-time performance**.
+# News 🚀
+- [x] Accepted to IEEE IV 2026 as Oral Presentation 
+- [x] Release weights and evaluation code
+- [x] Release main training code 
+- [ ] Release visualization scripts to merge uncertainty maps
+  
 
-<br>
+## Pipeline Overview
+![](./images/Final_pipeline_before_submission.jpg "")
 
-<div align="center"><img src="images/nuscene.gif" width="75%"/></div>
-<div align="center">
-<b>nuScenes demo:</b>
-Our CoBEVT can be used on single-vehicle multi-camera semantic BEV Segmentations.
-</div>
-<br>
 
-<br>
-
-<div align="center"><img src="images/opv2v.gif" width="75%"/></div>
-<div align="center">
-<b>OPV2V demo:</b>
-Our CoBEVT can also be used for multi-agent BEV map prediction.
-</div>
-<br>
+  
 
 ## Installation
-The pipeline for nuScenes dataset and OPV2V dataset is different. Please refer to the specific folder for more details based on your research purpose.
 
-:point_right: [nuScenes Users](nuscenes) <br/>
-:point_right: [OPV2V Users](opv2v)
+<details> <summary>Clone this repository</summary>
 
+```bash
+git clone https://github.com/abhishekjagtap1/Hyper-V2X
+```
+</details>
+<details> <summary>Set up the conda environment</summary>
 
-## Models
+```
+cd Hyper-V2X/opv2v
 
-<details>
-  <summary><strong>Fused Axial Attention Module (FAX)</strong> (click to expand) </summary>
+# Setup conda environment
+conda create -y --name hyperv2x python= 3.8
 
-<img src = "https://user-images.githubusercontent.com/43280278/192188069-44381995-7d0f-43fb-aded-68d62595b2d4.png" width="800">
+conda activate hyperv2x
+pip install torch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 --index-url https://download.pytorch.org/whl/cu118
 
+# Install dependencies
+
+python opencood/utils/setup.py build_ext --inplace
+python setup.py develop
+pip install -r requirements.txt
+
+```
 </details>
 
-<details>
-  <summary><strong>SinBEVT (single-agent multi-view fusion) and FuseBEVT (multi-agent BEV fusion) </strong> (click to expand) </summary>
+## Acquiring Datasets
+Our Hyper-V2X uses the same training datasets as CoBeVT. Below we quote OpenCOOD's [detailed instructions](https://github.com/DerrickXuNu/CoBEVT/tree/main/opv2v#:~:text=on%20OpenCOOD(ICRA2022)-,Data%20Preparation,-Download%20OPV2V%20origin) on getting datasets.
+> 1. Download OPV2V origin data and structure it as required. See [OpenCOOD data tutorial](https://opencood.readthedocs.io/en/latest/md_files/data_intro.html) for more detailed insructions.
+> 2. After organize the data folders, download the `additional.zip` from [this url](https://ucla.app.box.com/v/UCLA-MobilityLab-OPV2V/file/1621920078208). This file contains BEV semantic segmentation labels that origin OPV2V data does not include.
+> 3. The `additional` folder has the same structure of original OPV2V dataset. So unzip `additional.zip` and merge them with original opv2v data.
+> 4. Remove scenario `opv2v/train/2021_09_09_13_20_58`, as this scenario has some bug for camera data.
 
-<img src = "https://user-images.githubusercontent.com/43280278/192188116-2b3fd013-b8fc-4d79-a5dd-5eb88d09e622.png" width="800">
-
-</details>
-
-<details>
-  <summary><strong>CoBEVT Architecture</strong> (click to expand) </summary>
-
-<img src = "images/CorpBEVT_Overview-1.png" width="800">
-
-</details>
-
-
-
-## Results
-
-<details>
-  <summary><strong>Main results (OPV2V-camera, -LiDAR, and nuScenes.)</strong> (click to expand) </summary>
-
-<img src = "https://user-images.githubusercontent.com/43280278/192186838-8b42605b-9cb0-4f3e-9a44-615ec158ce37.png" width="800">
-</details>
-
-<details>
-  <summary><strong>Qualitative results on OPV2V-camera</strong> (click to expand) </summary>
-
-<img src = "https://user-images.githubusercontent.com/43280278/192187203-4716e5dc-af4d-4652-bddb-fb28ab07260d.png" width="1000">
- 
-<img src = "https://user-images.githubusercontent.com/43280278/192187720-a1eb5c39-5a71-48c8-8eff-6b04b158d0d4.png" width="1000">
-
-</details>
+## <div align="center">**Visualization**</div>
+To quickly visualize a single sample of the data:
+```shell
+cd CoBEVT/opv2v
+python opencood/visualization/visialize_camera.py [--scene ${SCENE_NUMBER} --sample ${SAMPLE_NUMBER}]
+```
+* `scene`: The ith scene in the data. Default: 4
+* `sample`: The jth sample in the ith scene. Default: 10
 
 
+## <div align="center">**Inference**</div>
+To run pre-trained model with different compression rates, please first download `hyperv2x` pretrained weights from [this url]() ,
+and then put them under `opv2v/logs/`. 
 
-<details>
-  <summary><strong>Qualitative results on OPV2V-LiDAR</strong> (click to expand) </summary>
-
-<img src = "https://user-images.githubusercontent.com/43280278/192187375-0a7168bb-8be9-49f6-9f2b-42b7b57fe031.png" width="1000">
-<img src = "https://user-images.githubusercontent.com/43280278/192187420-8c8c7b31-ee09-4d9f-8df2-7e92dd79acb2.png" width="1000">
-
-</details>
-
-
-<details>
-  <summary><strong>Qualitative results on nuScenes</strong> (click to expand) </summary>
-
-<img src = "https://user-images.githubusercontent.com/43280278/192187578-1127a7ae-590e-4f27-bcc2-311fd554d0ae.png" width="1000">
-
-</details>
-
-
-<details>
-  <summary><strong>Ablation study</strong> (click to expand) </summary>
-
-<img src = "https://user-images.githubusercontent.com/43280278/192186995-0fa0b1dd-b5a8-4125-af39-17a79ce0de0e.png" width="800">
-</details>
-
-
-## Citation
- ```bibtex
-@inproceedings{xu2022cobevt,
-  author = {Runsheng Xu, Zhengzhong Tu, Hao Xiang, Wei Shao, Bolei Zhou, Jiaqi Ma},
-  title = {CoBEVT: Cooperative Bird's Eye View Semantic Segmentation with Sparse Transformers},
-  booktitle={Conference on Robot Learning (CoRL)},
-  year = {2022}}
-@article{xu2022v2x,
-  title={V2X-ViT: Vehicle-to-everything cooperative perception with vision transformer},
-  author={Xu, Runsheng and Xiang, Hao and Tu, Zhengzhong and Xia, Xin and Yang, Ming-Hsuan and Ma, Jiaqi},
-  journal={Proceedings of the European Conference on Computer Vision (ECCV)},
-  year={2022}
-}
-@inproceedings{tu2022maxim,
-  title={Maxim: Multi-axis mlp for image processing},
-  author={Tu, Zhengzhong and Talebi, Hossein and Zhang, Han and Yang, Feng and Milanfar, Peyman and Bovik, Alan and Li, Yinxiao},
-  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
-  pages={5769--5780},
-  year={2022}
-}
-@article{tu2022maxvit,
-  title={Maxvit: Multi-axis vision transformer},
-  author={Tu, Zhengzhong and Talebi, Hossein and Zhang, Han and Yang, Feng and Milanfar, Peyman and Bovik, Alan and Li, Yinxiao},
-  journal={Proceedings of the European Conference on Computer Vision (ECCV)},
-  year={2022}
-}
+Please run the following command for stochaistic BEV map segmentation and uncertainty estimation
+```python
+python opencood/tools/inference_camera.py --model_dir opencood/logs/hyperv2x/compression_64 --save_vis
 ```
 
-## Acknowledgement
-CoBEVT is build upon [OpenCOOD](https://github.com/DerrickXuNu/OpenCOOD), which is the first Open Cooperative Detection framework for autonomous driving.
+Arguments Explanation:
+- `save_vis`: Bool to save **Predictions**, **Epistemic** and **Aleatoric** uncertainty maps.
+- `model_dir` : the path of the checkpoints. we provide checkpoints for multiple `compression_rates` [this url]() with their corresponding  `config.yaml` file.
 
-Our nuScenes experiments used the training pipeline in [CVT(CVPR2022)](https://github.com/bradyz/cross_view_transformers).
+To merge the results from **Epistemic** and **Aleatoric** uncertainty maps, **dynamic segmentation** and **GT staic maps** please run the following command (please run the below two commands)
+```python
+TODO:
+```
 
-CoBEVT is partly inspired by [V2X-ViT](https://github.com/DerrickXuNu/v2x-vit), [MAXIM](https://github.com/google-research/maxim) and [MaxViT](https://github.com/google-research/maxvit).
+Note: When you want to run on test set, make sure change `validation_dir` in the yaml file to the testing folder.
+
+
+## <div align="center">**OpenCOOD General Training Commands**</div>
+OpenCOOD uses yaml file to configure all the parameters for training. To train your own model
+from scratch or a continued checkpoint **on a single gpu**, run the following commonds:
+```python
+python opencood/tools/train_camera.py --hypes_yaml ${CONFIG_FILE} [--model_dir  ${CHECKPOINT_FOLDER}]
+```
+Arguments Explanation:
+- `hypes_yaml`: the path of the training configuration file, e.g. `opencood/hypes_yaml/opcamera/cobevt.yaml`.
+- `model_dir` (optional) : the path of the checkpoints. This is used to fine-tune the trained models. When the `model_dir` is
+given, the trainer will discard the `hypes_yaml` and load the `config.yaml` in the checkpoint folder.
+  
+To train on **multiple gpus**, run the following command:
+```
+CUDA_VISIBLE_DEVICES=0,1,2,3 python -m torch.distributed.launch --nproc_per_node=4  --use_env opencood/tools/train_camera.py --hypes_yaml ${CONFIG_FILE} [--model_dir  ${CHECKPOINT_FOLDER}
+```
+
+## <div align="center">**Hyper-V2X Training Pipeline**</div>
+
+### Stage 1: Train Single-Vehicle Baseline (SinBeVT)
+
+Train the single-vehicle model for 90 epochs:
+```python
+python opencood/tools/train_camera.py --hypes_yaml opencood/hypes_yaml/opcamera/fax.yaml
+``` 
+This produces the SinBeVT pretrained backbone, which is used as initialization for Hyper-V2X.
+
+### Stage 2: Prepare Hyper-V2X Initialization
+After training SinBeVT:
+```shell
+mkdir -p logs/HyperV2X
+``` 
+Copy the SinBeVT checkpoint into the folder:
+```shell
+cp ${SINBEVT_CHECKPOINT} logs/HyperV2X/net_epoch_1.pth
+cp ${CONFIG_FILE} logs/HyperV2X/corbevt.yaml
+``` 
+
+### Stage 3: Train Hyper-V2X
+Start Hyper-V2X training from pretrained initialization:
+```python
+python opencood/tools/train_camera.py \
+    --hypes_yaml ${CONFIG_FILE} \
+    --model_dir logs/HyperV2X
+``` 
+### Stage 4: Fine-Tuning with Compression Rates
+Fine-tune Hyper-V2X under different communication compression rates: we provide a set of `hypes_yaml` files for various compression rates at `opv2v/opencood/hypes_yaml/compression_rates` 
+
+```python
+python opencood/tools/train_camera.py \
+  --hypes_yaml opv2v/opencood/hypes_yaml/compression_rates/compression_64.yaml \
+  --model_dir  logs/HyperV2X
+```
+
+## <div align="center">**Uncertainty Estimation under Communication Constraints**</div>
+
+![](./images/compression.jpg "")
+
+As the compression rate (CPR) increases from 0 to 64, we observe progressive degradation in segmentation performance. Specific objects that are accurately detected at compression rate 0 gradually deteriorate as communication bandwidth is reduced, until they are no longer detected at compression rate 64. Critically, our uncertainty maps effectively capture this degradation and exhibit progressively higher epistemic and aleatoric uncertainty as compression increases.
+
+## Acknowledgement 
+
+Some source code of ours is borrowed from [CoBevt](https://github.com/hustvl/4DGaussians) and [Torch Uncertainty](https://github.com/torch-uncertainty/torch-uncertainty) and [HyperDM](https://github.com/matthewachan/hyperdm). We sincerely appreciate the excellent works of these authors.
+
+
+## BibTeX 
+If you find this repository useful, please consider giving a star ⭐ and citation 🦖:
+```
+@inproceedings{jagtap2025hyperv2x,
+  author    = {Jagtap, Abhishek Dinkar and Tiptur Sadashivaiah, Sanath and Festag, Andreas},
+  title     = {Hyper-V2X: Hypernetworks for Estimating Epistemic and Aleatoric Uncertainty
+               in Cooperative Bird's-Eye-View Semantic Segmentation},
+  booktitle = {IEEE Intelligent Vehicles Symposium (IV)},
+  year      = {2026},
+  note      = {Oral presentation},
+  url       = {https://arxiv.org/abs/2605.21309v1}
+}
+
+TODO:
+
+```
+
+
+
+
+
+
