@@ -1,7 +1,7 @@
 <div align="center">
 
 # Hyper-V2X: Hypernetworks for Estimating Epistemic and Aleatoric Uncertainty in Cooperative Bird's-Eye-View Semantic Segmentation
-  <h3 align="center">IEEE IV 2024 Oral</h3>
+  <h3 align="center">IEEE IV 2026 Oral</h3>
   <p align="center">
     <a href="">Abhishek Dinkar Jagtap</a>
     &nbsp;·&nbsp;
