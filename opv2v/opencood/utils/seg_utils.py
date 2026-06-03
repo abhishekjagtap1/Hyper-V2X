@@ -313,7 +313,7 @@ def nll_brier(gt_dynamic, pred_dynamic, ignore_index=255):
     Returns:
         nll, brier
     """
-    print(gt_dynamic.shape, pred_dynamic.shape)  # (256,256) (2,256,256)
+    #print(gt_dynamic.shape, pred_dynamic.shape)  # (256,256) (2,256,256)
 
     # ---- derive prediction + confidence from logits ----
     l0 = pred_dynamic[0]      # (256,256)

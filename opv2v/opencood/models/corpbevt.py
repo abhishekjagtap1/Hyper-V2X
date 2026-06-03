@@ -1,6 +1,3 @@
-"""
-Implementation of Brady Zhou's cross view transformer
-"""
 import einops
 import numpy as np
 import torch.nn as nn
@@ -28,7 +25,7 @@ import math
 # -------------------------
 # Bayesian Hypernetwork
 # -------------------------
-class VariationalMultiHyperNet(nn.Module):
+class HyperNet(nn.Module):
     """
     Outputs posterior mean and logvar for decoder parameters.
     For stability we predict logvar and clamp it.
@@ -81,8 +78,8 @@ class HyperSegHead(nn.Module):
         self.total_params = w_count + b_count
         self.K = K
 
-        # use variational hypernet
-        self.hyper = VariationalMultiHyperNet(cond_dim=in_channels,
+        # use hypernet
+        self.hyper = HyperNet(cond_dim=in_channels,
                                               output_param_count=self.total_params)
 
     def _unflatten(self, vec):

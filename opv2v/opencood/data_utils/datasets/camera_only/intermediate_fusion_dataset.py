@@ -66,7 +66,7 @@ class CamIntermediateFusionDataset(base_camera_dataset.BaseCameraDataset):
                                                      ego_lidar_pose)
             if distance > opencood.data_utils.datasets.COM_RANGE:
                 continue
-            print(idx)
+            #print(idx)
             selected_cav_processed = \
                 self.get_single_cav(selected_cav_base)
 
