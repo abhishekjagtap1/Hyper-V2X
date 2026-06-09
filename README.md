@@ -89,7 +89,7 @@ and then put them under `opv2v/logs/`.
 
 Please run the following command for stochaistic BEV map segmentation and uncertainty estimation
 ```python
-python opencood/tools/inference_camera.py --model_dir opencood/logs/hyperv2x/compression_64 --save_vis
+python opencood/tools/inference_all_uncertainity_nll.py --model_dir opencood/logs/hyperv2x/compression_64 --save_vis
 ```
 
 Arguments Explanation:
