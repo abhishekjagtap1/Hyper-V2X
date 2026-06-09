@@ -93,7 +93,7 @@ python opencood/tools/inference_all_uncertainity_nll.py --model_dir opencood/log
 
 Arguments Explanation:
 - `save_vis`: Bool to save **Predictions**, **Epistemic** and **Aleatoric** uncertainty maps.
-- `model_dir` : the path of the checkpoints. we provide checkpoints for multiple `compression_rates` [this url]() with their corresponding  `config.yaml` file.
+- `model_dir` : the path of the checkpoints. we provide checkpoints for multiple `compression_rates` [this url](https://huggingface.co/Uchihadj/Hyper-V2X/tree/main/compression_exp) with their corresponding  `config.yaml` file.
 
 To merge the results from **Epistemic** and **Aleatoric** uncertainty maps, **dynamic segmentation** and **GT staic maps** please run the following command (please run the below two commands)
 ```python
