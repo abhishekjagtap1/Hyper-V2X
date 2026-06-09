@@ -84,7 +84,7 @@ python opencood/visualization/visialize_camera.py [--scene ${SCENE_NUMBER} --sam
 
 
 ## <div align="center">**Inference**</div>
-To run pre-trained model with different compression rates, please first download `hyperv2x` pretrained weights from [this url]() ,
+To run pre-trained model with different compression rates, please first download `hyperv2x` pretrained weights from [this url](https://huggingface.co/Uchihadj/Hyper-V2X/tree/main/compression_exp) ,
 and then put them under `opv2v/logs/`. 
 
 Please run the following command for stochaistic BEV map segmentation and uncertainty estimation
@@ -165,7 +165,7 @@ As the compression rate (CPR) increases from 0 to 64, we observe progressive deg
 
 ## Acknowledgement 
 
-Some source code of ours is borrowed from [CoBevt](https://github.com/hustvl/4DGaussians) and [Torch Uncertainty](https://github.com/torch-uncertainty/torch-uncertainty) and [HyperDM](https://github.com/matthewachan/hyperdm). We sincerely appreciate the excellent works of these authors.
+Some source code of ours is borrowed from [CoBevt](https://github.com/DerrickXuNu/CoBEVT) and [Torch Uncertainty](https://github.com/torch-uncertainty/torch-uncertainty) and [HyperDM](https://github.com/matthewachan/hyperdm). We sincerely appreciate the excellent works of these authors.
 
 
 ## BibTeX 
