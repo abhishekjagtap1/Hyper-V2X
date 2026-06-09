@@ -84,8 +84,7 @@ python opencood/visualization/visialize_camera.py [--scene ${SCENE_NUMBER} --sam
 
 
 ## <div align="center">**Inference**</div>
-To run pre-trained model with different compression rates, please first download `hyperv2x` pretrained weights from [this url](https://huggingface.co/Uchihadj/Hyper-V2X/tree/main/compression_exp) ,
-and then put them under `opv2v/logs/`. 
+To run the pre-trained model with different compression rates, first download the `hyperv2x` pretrained weights from [Hugging Face](https://huggingface.co/Uchihadj/Hyper-V2X/tree/main/compression_exp). Then place the downloaded files under `opv2v/logs/`.
 
 Please run the following command for stochaistic BEV map segmentation and uncertainty estimation
 ```python
